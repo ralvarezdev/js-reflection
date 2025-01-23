@@ -1,6 +1,6 @@
 {
   "name": "@ralvarezdev/js-reflection",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Reflection helper functions for JavaScript projects",
   "main": "index.js",
   "scripts": {
@@ -21,5 +21,6 @@
   "bugs": {
     "url": "https://github.com/ralvarezdev/js-reflection/issues"
   },
-  "homepage": "https://github.com/ralvarezdev/js-reflection#readme"
+  "homepage": "https://github.com/ralvarezdev/js-reflection#readme",
+  "type": "module"
 }
