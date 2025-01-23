@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 
 // Errors that can be thrown by this class
-export const SCRIPT_NOT_DEFINED_ERROR = new Error("Script not defined")
+export const SCRIPT_PATH_NOT_DEFINED_ERROR = new Error("Script path not defined")
 export const CLASS_NOT_DEFINED_ERROR = new Error("Class not defined")
 export const CLASS_NOT_FOUND_ERROR = "Class not found"
 export const OBJECT_NOT_DEFINED_ERROR = new Error("Object not defined")
@@ -10,43 +10,32 @@ export const OBJECT_NOT_FOUND_ERROR = "Object not found"
 // Script represents a module script in the file system
 export default class Script {
     #nestedModules
-    #scriptName
+    #scriptPath
     #script
     #loadingScript
     #loadedScript
-    #fullPath
     #eventEmitter
 
     // Path constructor
-    constructor(scriptName, ...modules) {
-        // If the script name is not defined, throw an error
-        if (!scriptName)
-            throw SCRIPT_NOT_DEFINED_ERROR;
+    constructor(scriptPath) {
+        // If the script path is not defined, throw an error
+        if (!scriptPath)
+            throw SCRIPT_PATH_NOT_DEFINED_ERROR;
 
         // Create an event emitter
         this.#eventEmitter = new EventEmitter();
 
-        // Format the script name
-        scriptName = scriptName.trim()
-
         // Add the file extension if it does not exist
-        if (!scriptName.endsWith('.js'))
-            scriptName += '.js'
+        if (!scriptPath.endsWith('.js'))
+            scriptPath += '.js'
 
         // Set the modules and script
-        this.#nestedModules = modules;
-        this.#scriptName = scriptName;
+        this.#scriptPath = scriptPath;
     }
 
-    // Get the full path
-    get fullPath() {
-        // If the full path is already defined, return it
-        if (this.#fullPath)
-            return this.#fullPath;
-
-        // Get the full path
-        this.#fullPath = [this.#nestedModules.join('/'), this.#scriptName].join('/');
-        return this.#fullPath;
+    // Get the script path
+    get scriptPath() {
+        return this.#scriptPath
     }
 
     // Check if it has a nested module
@@ -82,15 +71,16 @@ export default class Script {
         if (this.#loadingScript) {
             const waitForEvent = async () => {
                 return new Promise((resolve) => {
-                    this.#eventEmitter.once('load', () => {
+                    this.#eventEmitter.on('load', () => {
                         resolve(this.#loadedScript);
                     });
                 });
             };
+            return await waitForEvent()
         }
 
         // Load the script
-        this.#loadingScript = import(this.fullPath)
+        this.#loadingScript = import(this.#scriptPath)
             .then(script => {
                 // Set the loaded script
                 this.#loadedScript = script;
@@ -104,11 +94,8 @@ export default class Script {
                 throw error;
             });
 
-        // Wait for the script to load
-        await this.#loadingScript;
-
         // Return the loaded script
-        return this.#loadedScript;
+        return await this.#loadedScript;
     }
 
     // Initialize a script class
@@ -122,7 +109,7 @@ export default class Script {
 
         // Check if the class is not found
         if (!script[className])
-            throw new Error(CLASS_NOT_FOUND_ERROR + ": " + this.fullPath + ", "+ className);
+            throw new Error(CLASS_NOT_FOUND_ERROR + ": " + this.#scriptPath + ", "+ className);
 
         // Get the class from the script
         const Class = script[className]
@@ -142,7 +129,7 @@ export default class Script {
 
         // Check if the object is not found
         if (!script[objectName])
-            throw new Error(OBJECT_NOT_FOUND_ERROR + ": "+ this.fullPath + ", "+ objectName);
+            throw new Error(OBJECT_NOT_FOUND_ERROR + ": "+ this.#scriptPath + ", "+ objectName);
 
         // Return the object from the script
         return script[objectName];
