@@ -1,3 +1,3 @@
-import Script from "./lib/path/script";
+import Script from "./src/path/script";
 
 export default Script
