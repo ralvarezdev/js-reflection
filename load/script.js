@@ -11,9 +11,7 @@ export const OBJECT_IS_NOT_A_CLASS_ERROR = "Object is not a class"
 
 // Script represents a module script in the file system
 export default class Script {
-    #nestedModules
     #scriptPath
-    #script
     #loadingScript
     #loadedScript
     #eventEmitter
@@ -38,29 +36,6 @@ export default class Script {
     // Get the script path
     get scriptPath() {
         return this.#scriptPath
-    }
-
-    // Check if it has a nested module
-    hasNestedModule() {
-        return this.#nestedModules.length > 0;
-    }
-
-    // Get the nested module
-    get nestedModule() {
-        // If there are no modules, return null
-        if (!this.hasNestedModule())
-            return null;
-        return this.#nestedModules[0];
-    }
-
-    // Remove the nested module
-    removeNestedModule() {
-        this.#nestedModules.shift();
-    }
-
-    // Get the script
-    get script() {
-        return this.#script;
     }
 
     // Get the loaded script
