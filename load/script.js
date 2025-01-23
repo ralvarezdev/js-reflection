@@ -8,6 +8,8 @@ export const OBJECT_NOT_DEFINED_ERROR = new Error("Object not defined")
 export const OBJECT_NOT_FOUND_ERROR = "Object not found"
 export const OBJECT_IS_NOT_A_FUNCTION_ERROR = "Object is not a function"
 export const OBJECT_IS_NOT_A_CLASS_ERROR = "Object is not a class"
+export const PROPERTY_NOT_FOUND_ERROR = "Property not found"
+export const MISMATCHED_NUMBER_OF_PARAMETERS_ERROR = "Mismatched number of parameters"
 
 // Script represents a module script in the file system
 export default class Script {
@@ -95,6 +97,42 @@ export default class Script {
         return script[objectName];
     }
 
+    // Get object property from the script
+    async getObjectProperty(objectName, propertyName) {
+        // Get the object from the script
+        const object = await this.getObject(objectName);
+
+        // Get the property
+        const property = object[propertyName];
+
+        // Check if the property is not found
+        if (!property)
+            throw new Error(PROPERTY_NOT_FOUND_ERROR+ ": " + this.#scriptPath + ", " + objectName + "." + propertyName);
+
+        return property
+    }
+
+    // Get nested object property from the script
+    async getNestedObjectProperty(objectName, ...propertyNames) {
+        // Get the object from the script
+        let object = await this.getObject(objectName);
+
+        // Get the nested property
+        for (const propertyName of propertyNames) {
+            // Get the property
+            const property = object[propertyName];
+
+            // Check if the property is not found
+            if (!property)
+                throw new Error(PROPERTY_NOT_FOUND_ERROR + ": " + this.#scriptPath + ", " + objectName + "." + propertyName);
+
+            // Set the object to the property
+            object = property;
+        }
+
+        return object
+    }
+
     // Get a function from the script
     async getFunction(functionName) {
         // Get the object from the script
@@ -128,6 +166,19 @@ export default class Script {
         return new Class(parameters);
     }
 
+    // Initialize a script class from the script with the same number of parameters
+    async safeCallNew(className, ...parameters) {
+        // Get the class from the script
+        const Class = await this.getClass(className);
+
+        // Check if the number of parameters is the same
+        if (Class.length !== parameters.length)
+            throw new Error(MISMATCHED_NUMBER_OF_PARAMETERS_ERROR + ": " + this.#scriptPath + ", " + className);
+
+        // Return a new instance of the class
+        return new Class(parameters);
+    }
+
     // Call a function from the script
     async callFunction(functionName, ...parameters) {
         // Get the function from the script
@@ -137,18 +188,45 @@ export default class Script {
         return fn(...parameters);
     }
 
+    // Call a function from the script with the same number of parameters
+    async safeCallFunction(functionName, ...parameters) {
+        // Get the function from the script
+        const fn = await this.getFunction(functionName);
+
+        // Check if the number of parameters is the same
+        if (fn.length !== parameters.length)
+            throw new Error(MISMATCHED_NUMBER_OF_PARAMETERS_ERROR + ": " + this.#scriptPath + ", " + functionName);
+
+        // Call the function from the script
+        return fn(...parameters);
+    }
+
     // Call a method from an object in the script
     async callObjectMethod(objectName, methodName, ...parameters) {
-        // Get the object from the script
-        const object = await this.getObject(objectName);
-
-        // Get the method
-        const method = object[methodName];
+        // Get the object method from the script
+        const method = await this.getObjectProperty(objectName, methodName);
 
         // Check if the method is a function
         if (!isFunction(method))
             throw new Error(OBJECT_IS_NOT_A_FUNCTION_ERROR + ": " + this.#scriptPath + ", " + objectName + "." + methodName);
 
+
+        // Call the method from the object in the script
+        return method(...parameters);
+    }
+
+    // Call a method from an object in the script with the same number of parameters
+    async safeCallObjectMethod(objectName, methodName, ...parameters) {
+        // Get the object method from the script
+        const method = await this.getObjectProperty(objectName, methodName);
+
+        // Check if the method is a function
+        if (!isFunction(method))
+            throw new Error(OBJECT_IS_NOT_A_FUNCTION_ERROR + ": " + this.#scriptPath + ", " + objectName + "." + methodName);
+
+        // Check if the number of parameters is the same
+        if (method.length !== parameters.length)
+            throw new Error(MISMATCHED_NUMBER_OF_PARAMETERS_ERROR + ": " + this.#scriptPath + ", " + objectName + "." + methodName);
 
         // Call the method from the object in the script
         return method(...parameters);
