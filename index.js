@@ -1,4 +1,4 @@
-import Script from "./path/script.js";
+import Script from "./load/script.js";
 
 export default Script
 

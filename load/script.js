@@ -1,11 +1,13 @@
 import EventEmitter from 'events';
+import {pathToFileURL} from "url";
+import {isClass, isFunction} from "./helpers.js";
 
 // Errors that can be thrown by this class
 export const SCRIPT_PATH_NOT_DEFINED_ERROR = new Error("Script path not defined")
-export const CLASS_NOT_DEFINED_ERROR = new Error("Class not defined")
-export const CLASS_NOT_FOUND_ERROR = "Class not found"
 export const OBJECT_NOT_DEFINED_ERROR = new Error("Object not defined")
 export const OBJECT_NOT_FOUND_ERROR = "Object not found"
+export const OBJECT_IS_NOT_A_FUNCTION_ERROR = "Object is not a function"
+export const OBJECT_IS_NOT_A_CLASS_ERROR = "Object is not a class"
 
 // Script represents a module script in the file system
 export default class Script {
@@ -30,7 +32,7 @@ export default class Script {
             scriptPath += '.js'
 
         // Set the modules and script
-        this.#scriptPath = scriptPath;
+        this.#scriptPath = pathToFileURL(scriptPath);
     }
 
     // Get the script path
@@ -69,18 +71,18 @@ export default class Script {
 
         // Check if the script is already loading
         if (this.#loadingScript) {
-            const waitForEvent = async () => {
+            await (async () => {
                 return new Promise((resolve) => {
                     this.#eventEmitter.on('load', () => {
                         resolve(this.#loadedScript);
                     });
                 });
-            };
-            return await waitForEvent()
+            })()
+            return this.#loadedScript
         }
 
         // Load the script
-        this.#loadingScript = import(this.#scriptPath)
+        this.#loadingScript = import(this.#scriptPath.href)
             .then(script => {
                 // Set the loaded script
                 this.#loadedScript = script;
@@ -94,32 +96,15 @@ export default class Script {
                 throw error;
             });
 
-        // Return the loaded script
-        return await this.#loadedScript;
-    }
+        // Wait for the script to load
+        await this.#loadingScript
 
-    // Initialize a script class
-    async new(className, ...parameters) {
-        // Check if the class name is not defined
-        if (!className)
-            throw CLASS_NOT_DEFINED_ERROR;
-
-        // Get the loaded script
-        const script = await this.loadedScript();
-
-        // Check if the class is not found
-        if (!script[className])
-            throw new Error(CLASS_NOT_FOUND_ERROR + ": " + this.#scriptPath + ", "+ className);
-
-        // Get the class from the script
-        const Class = script[className]
-
-        // Return a new instance of the class
-        return new Class(parameters);
+        return this.#loadedScript;
     }
 
     // Get an object from the script
-    async object(objectName) {
+
+    async getObject(objectName) {
         // Check if the object name is not defined
         if (!objectName)
             throw OBJECT_NOT_DEFINED_ERROR;
@@ -128,17 +113,50 @@ export default class Script {
         const script = await this.loadedScript();
 
         // Check if the object is not found
-        if (!script[objectName])
-            throw new Error(OBJECT_NOT_FOUND_ERROR + ": "+ this.#scriptPath + ", "+ objectName);
+        if (!script?.[objectName])
+            throw new Error(OBJECT_NOT_FOUND_ERROR + ": " + this.#scriptPath + ", " + objectName);
 
         // Return the object from the script
         return script[objectName];
     }
 
+    // Get a function from the script
+    async getFunction(functionName) {
+        // Get the object from the script
+        const object= await this.getObject(functionName);
+
+        // Check if the object is a function
+        if (!isFunction(object))
+            throw new Error(OBJECT_IS_NOT_A_FUNCTION_ERROR + ": " + this.#scriptPath + ", " + functionName);
+
+        return object;
+    }
+
+    // Get a class from the script
+    async getClass(className) {
+        // Get the object from the script
+         const object=await this.getObject(className);
+
+         // Check if the object is a class
+            if (!isClass(object))
+                throw new Error(OBJECT_IS_NOT_A_CLASS_ERROR + ": " + this.#scriptPath + ", " + className);
+
+            return object;
+    }
+
+    // Initialize a script class from the script
+    async callNew(className, ...parameters) {
+        // Get the class from the script
+        const Class = await this.getClass(className);
+
+        // Return a new instance of the class
+        return new Class(parameters);
+    }
+
     // Call a function from the script
     async callFunction(functionName, ...parameters) {
-        // Get the function
-        const fn = await this.object(functionName);
+        // Get the function from the script
+        const fn = await this.getFunction(functionName);
 
         // Call the function from the script
         return fn(...parameters);
@@ -146,11 +164,16 @@ export default class Script {
 
     // Call a method from an object in the script
     async callObjectMethod(objectName, methodName, ...parameters) {
-        // Get the object
-        const object = await this.object(objectName);
+        // Get the object from the script
+        const object = await this.getObject(objectName);
 
         // Get the method
         const method = object[methodName];
+
+        // Check if the method is a function
+        if (!isFunction(method))
+            throw new Error(OBJECT_IS_NOT_A_FUNCTION_ERROR + ": " + this.#scriptPath + ", " + objectName + "." + methodName);
+
 
         // Call the method from the object in the script
         return method(...parameters);
