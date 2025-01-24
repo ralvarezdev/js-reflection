@@ -51,7 +51,7 @@ export default class Script {
             await (async () => {
                 return new Promise((resolve) => {
                     this.#eventEmitter.on('load', () => {
-                        resolve(this.#loadedScript);
+                        resolve();
                     });
                 });
             })()
