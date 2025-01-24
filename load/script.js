@@ -48,13 +48,11 @@ export default class Script {
 
         // Check if the script is already loading
         if (this.#loadingScript) {
-            await (async () => {
-                return new Promise((resolve) => {
+            await new Promise((resolve) => {
                     this.#eventEmitter.on('load', () => {
                         resolve();
                     });
                 });
-            })()
             return this.#loadedScript
         }
 
