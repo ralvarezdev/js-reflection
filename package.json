@@ -1,6 +1,6 @@
 {
   "name": "@ralvarezdev/js-reflection",
-  "version": "0.3.2",
+  "version": "0.3.5",
   "description": "Reflection helper functions for JavaScript projects",
   "main": "index.js",
   "scripts": {
