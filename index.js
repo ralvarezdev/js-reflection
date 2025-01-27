@@ -1,2 +1,2 @@
-export {default as Script} from "./load/script.js";
+export { default, isClass, isFunction} from './load';
 
