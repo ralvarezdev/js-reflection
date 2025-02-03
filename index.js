@@ -1,2 +1,2 @@
-export { default, isClass, isFunction} from './load';
+export { default, isClass, isFunction} from './load/index.js';
 
