@@ -41,3 +41,13 @@ test("import 'Class' class", async () => {
         assert.strictEqual(instance.name, "hello")
     }
 )
+
+// Test the Script class by importing a class and getting its methods
+test("import 'Class' class and get its methods", async () => {
+        const methods = await new Script(testFilePath).getClassMethods('Class')
+        console.log("Methods")
+        for (const method in methods)
+            console.log(method+": "+methods[method])
+        assert.notEqual(methods, {})
+    }
+)

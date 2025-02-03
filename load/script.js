@@ -186,8 +186,8 @@ export default class Script {
 
         // Iterate over the class methods
         Object.getOwnPropertyNames(Class.prototype).forEach(name =>{
-            if (typeof Class[name] === 'function' && name !== 'constructor')
-                classMethods[name] = Class[name];
+            if (typeof Class.prototype[name] === 'function' && name !== 'constructor')
+                classMethods[name] = Class.prototype[name];
         });
 
         return classMethods;

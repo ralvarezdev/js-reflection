@@ -18,4 +18,8 @@ export class Class {
     constructor() {
         this.name = "hello";
     }
+
+    method() {
+        return "hello";
+    }
 }
