@@ -78,7 +78,6 @@ export default class Script {
     }
 
     // Get an object from the script
-
     async getObject(objectName) {
         // Check if the object name is not defined
         if (!objectName)
@@ -175,6 +174,14 @@ export default class Script {
 
         // Return a new instance of the class
         return new Class(parameters);
+    }
+
+    // Get class methods from the script
+    async getClassMethods(className) {
+        // Get the class from the script
+        const Class = await this.getClass(className);
+
+        return Object.getOwnPropertyNames(Class.prototype).filter(name =>Class[name] === 'function' && name !== 'constructor');
     }
 
     // Call a function from the script
