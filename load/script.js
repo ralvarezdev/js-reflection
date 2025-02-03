@@ -181,7 +181,16 @@ export default class Script {
         // Get the class from the script
         const Class = await this.getClass(className);
 
-        return Object.getOwnPropertyNames(Class.prototype).filter(name =>Class[name] === 'function' && name !== 'constructor');
+        // Create the class methods object
+        const classMethods = {};
+
+        // Iterate over the class methods
+        Object.getOwnPropertyNames(Class.prototype).forEach(name =>{
+            if (typeof Class[name] === 'function' && name !== 'constructor')
+                classMethods[name] = Class[name];
+        });
+
+        return classMethods;
     }
 
     // Call a function from the script
