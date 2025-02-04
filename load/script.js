@@ -109,6 +109,18 @@ export default class Script {
         return property
     }
 
+    // Get object function property from the script
+    async getObjectFunctionProperty(objectName, propertyName) {
+        // Get the object property from the script
+        const property = await this.getObjectProperty(objectName, propertyName);
+
+        // Check if the property is not found
+        if (!isFunction(property))
+            throw new Error(OBJECT_IS_NOT_A_FUNCTION_ERROR + ": " + this.#scriptPath + ", " + objectName + "." + propertyName);
+
+        return property
+    }
+
     // Get nested object property from the script
     async getNestedObjectProperty(objectName, ...propertyNames) {
         // Get the object from the script
